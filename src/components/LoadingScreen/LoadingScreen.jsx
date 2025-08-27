@@ -13,9 +13,9 @@ const LoadingScreen = () => {
           clearInterval(interval)
           return 100
         }
-        return prev + 2
+        return prev + 4
       })
-    }, 60)
+    }, 30)
 
     return () => clearInterval(interval)
   }, [])

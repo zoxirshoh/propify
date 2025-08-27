@@ -106,6 +106,7 @@
   .header-actions {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 1.5rem;
   }
   
@@ -174,10 +175,19 @@
   }
   
   /* Responsive Design */
+
+  @media (max-width: 1000px) {
+    .contact-info1{ 
+      display: none;
+    }
+  }
+
   @media (max-width: 768px) {
     .header-container {
       padding: 0 1rem;
     }
+
+    
   
     .header-nav {
       display: none;
@@ -235,3 +245,15 @@
     }
   }
   
+  @media (max-width: 600px) {
+    .contact-info1{ 
+      display: none;
+    }
+
+    header button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 50px;
+    }
+  }

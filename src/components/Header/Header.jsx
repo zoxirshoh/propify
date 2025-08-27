@@ -53,14 +53,18 @@ const Header = () => {
           </ul>
         </nav>
 
-        <div className="header-actions">
-          <div className="contact-info">
-            <span className="phone">📞 +1 (555) 123-4567</span>
+        <div className="contact-info1">
+            <span className="phone">📞 +998 (77) 355 2105</span>
           </div>
+
+        <div className="header-actions">
+          
+          <Link to="/login">
           <button className="cta-button">
             Get Started
             <span className="arrow">→</span>
           </button>
+          </Link>
         </div>
 
         <button className={`mobile-menu-toggle ${isMenuOpen ? "active" : ""}`} onClick={toggleMenu}>
