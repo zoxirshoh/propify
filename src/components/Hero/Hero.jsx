@@ -1,110 +1,125 @@
-"use client"
-
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useNavigate } from "react-router-dom"
+import Icon from "../Icon/Icon"
+import { PROPERTY_TYPES } from "../../data/properties"
+import heroMain from "../../assets/images/modern-luxury-house.png"
+import heroSide from "../../assets/images/luxury-villa-pool.png"
+import heroSmall from "../../assets/images/modern-penthouse-city-view.png"
 import "./Hero.css"
 
 const Hero = () => {
-  const [isVisible, setIsVisible] = useState(false)
-  const [searchData, setSearchData] = useState({
-    location: "",
-    price: "",
-    rooms: "",
-  })
   const navigate = useNavigate()
+  const [mode, setMode] = useState("For Sale")
+  const [search, setSearch] = useState({ q: "", type: "", price: "" })
 
-  useEffect(() => {
-    setIsVisible(true)
-  }, [])
+  const update = (e) => setSearch((s) => ({ ...s, [e.target.name]: e.target.value }))
 
-  const handleInputChange = (e) => {
-    setSearchData({
-      ...searchData,
-      [e.target.id]: e.target.value,
-    })
-  }
-
-  const handleSearch = () => {
-    if (!searchData.location && !searchData.price && !searchData.rooms) {
-      alert("Please select at least one search criteria")
-      return
-    }
-
-    const searchParams = new URLSearchParams()
-    if (searchData.location) searchParams.set("location", searchData.location)
-    if (searchData.price) searchParams.set("price", searchData.price)
-    if (searchData.rooms) searchParams.set("rooms", searchData.rooms)
-
-    navigate(`/properties?${searchParams.toString()}`)
-  }
-
-  const handleExploreProperties = () => {
-    navigate("/properties")
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    const params = new URLSearchParams({ status: mode })
+    Object.entries(search).forEach(([k, v]) => v && params.set(k, v))
+    navigate(`/properties?${params.toString()}`)
   }
 
   return (
     <section className="hero">
-      <div className="hero-content">
-        <div className="brand-section">
-          <h1 className={`hero-title ${isVisible ? "animate-in" : ""}`}>
-            {"PROPIFY".split("").map((letter, i) => (
-              <span
-                key={i}
-                className={`letter ${isVisible ? "animate-letter" : ""}`}
-                style={{ animationDelay: `${i * 0.15}s` }}
-              >
-                {letter}
-              </span>
-            ))}
+      <div className="hero-bg" aria-hidden="true" />
+      <div className="container hero-grid">
+        <div className="hero-copy">
+          <span className="eyebrow hero-eyebrow">
+            <Icon name="star" size={14} filled /> Trusted by 1,500+ families
+          </span>
+          <h1 className="hero-title">
+            Find a home that <span className="text-gradient">fits your life</span>
           </h1>
-          <p className={`hero-subtitle ${isVisible ? "animate-in-delayed" : ""}`}>Place where you can find Your Dream House</p>
+          <p className="hero-subtitle">
+            Propify — simplifying property, amplifying value. Browse verified listings, compare prices and talk to an
+            expert agent in minutes.
+          </p>
+
+          <form className="hero-search" onSubmit={handleSubmit}>
+            <div className="hero-tabs" role="tablist">
+              {["For Sale", "For Rent"].map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  role="tab"
+                  aria-selected={mode === m}
+                  className={`hero-tab ${mode === m ? "is-active" : ""}`}
+                  onClick={() => setMode(m)}
+                >
+                  {m === "For Sale" ? "Buy" : "Rent"}
+                </button>
+              ))}
+            </div>
+            <div className="hero-fields">
+              <label className="hero-field">
+                <span>Location</span>
+                <input name="q" value={search.q} onChange={update} placeholder="City, area or title" />
+              </label>
+              <label className="hero-field">
+                <span>Property type</span>
+                <select name="type" value={search.type} onChange={update}>
+                  <option value="">All types</option>
+                  {PROPERTY_TYPES.map((t) => (
+                    <option key={t}>{t}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="hero-field">
+                <span>Budget</span>
+                <select name="price" value={search.price} onChange={update}>
+                  <option value="">Any price</option>
+                  <option value="0-750000">Under $750K</option>
+                  <option value="750000-1500000">$750K – $1.5M</option>
+                  <option value="1500000+">$1.5M+</option>
+                </select>
+              </label>
+              <button type="submit" className="btn btn-primary hero-submit" aria-label="Search properties">
+                <Icon name="search" size={18} /> <span>Search</span>
+              </button>
+            </div>
+          </form>
+
+          <dl className="hero-stats">
+            <div>
+              <dt>1.5K+</dt>
+              <dd>Properties sold</dd>
+            </div>
+            <div>
+              <dt>98%</dt>
+              <dd>Happy clients</dd>
+            </div>
+            <div>
+              <dt>15+</dt>
+              <dd>Years of experience</dd>
+            </div>
+          </dl>
         </div>
 
-        <div className={`search-container ${isVisible ? "animate-in-search" : ""}`}>
-          <div className="search-bar">
-            <div className="search-field animate-field-1">
-              <label htmlFor="location">Location</label>
-              <input
-                type="text"
-                id="location"
-                placeholder="Enter city or area"
-                value={searchData.location}
-                onChange={handleInputChange}
-              />
+        <div className="hero-visual" aria-hidden="true">
+          <img className="hero-img hero-img--main" src={heroMain} alt="" />
+          <img className="hero-img hero-img--side" src={heroSide} alt="" />
+          <img className="hero-img hero-img--small" src={heroSmall} alt="" />
+          <div className="hero-float hero-float--top">
+            <span className="hero-float-icon">
+              <Icon name="shield" size={18} />
+            </span>
+            <div>
+              <strong>Verified listings</strong>
+              <small>Every home checked</small>
             </div>
-
-            <div className="search-field animate-field-2">
-              <label htmlFor="price">Price Range</label>
-              <select id="price" value={searchData.price} onChange={handleInputChange}>
-                <option value="">Select range</option>
-                <option value="0-500000">$0 - $500K</option>
-                <option value="500000-1000000">$500K - $1M</option>
-                <option value="1000000+">$1M+</option>
-              </select>
-            </div>
-
-            <div className="search-field animate-field-3">
-              <label htmlFor="rooms">Rooms</label>
-              <select id="rooms" value={searchData.rooms} onChange={handleInputChange}>
-                <option value="">Any</option>
-                <option value="1">1 Room</option>
-                <option value="2">2 Rooms</option>
-                <option value="3">3 Rooms</option>
-                <option value="4+">4+ Rooms</option>
-              </select>
-            </div>
-
-            <button className="search-button animate-button" onClick={handleSearch}>
-              <span>🔍 Search Properties</span>
-              <div className="button-ripple"></div>
-            </button>
           </div>
-
-          <div className="explore-button-container">
-            <button className="explore-button" onClick={handleExploreProperties}>
-              <span>🏠 Explore All Properties</span>
-              <div className="explore-arrow">→</div>
-            </button>
+          <div className="hero-float hero-float--bottom">
+            <div className="hero-avatars">
+              <span>S</span>
+              <span>M</span>
+              <span>A</span>
+            </div>
+            <div>
+              <strong>24/7 Agents</strong>
+              <small>Ready to help</small>
+            </div>
           </div>
         </div>
       </div>

@@ -1,0 +1,152 @@
+.contact {
+  padding-bottom: 96px;
+}
+
+.contact-channels {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-top: -36px;
+  position: relative;
+}
+
+.contact-channel {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 22px;
+  box-shadow: var(--shadow);
+  transition: transform 0.25s var(--ease), border-color 0.25s var(--ease);
+}
+
+a.contact-channel:hover {
+  transform: translateY(-4px);
+  border-color: var(--primary);
+}
+
+.contact-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: var(--brand-gradient);
+  color: var(--on-primary);
+}
+
+.contact-channel div {
+  display: flex;
+  flex-direction: column;
+}
+
+.contact-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.contact-channel small {
+  color: var(--text-muted);
+}
+
+.contact-grid {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 40px;
+  margin-top: 56px;
+  align-items: start;
+}
+
+.contact-form {
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.contact-form h2,
+.faq h2 {
+  font-size: 1.4rem;
+}
+
+.contact-form .btn {
+  align-self: flex-start;
+}
+
+.contact-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.faq h2 {
+  margin-bottom: 18px;
+}
+
+.faq-item {
+  border-bottom: 1px solid var(--border);
+}
+
+.faq-item button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 0;
+  text-align: left;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.faq-item button svg {
+  flex-shrink: 0;
+  transition: transform 0.3s var(--ease);
+  color: var(--text-muted);
+}
+
+.faq-item.is-open button svg {
+  transform: rotate(180deg);
+  color: var(--primary-strong);
+}
+
+.faq-answer {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.35s var(--ease);
+}
+
+.faq-answer p {
+  overflow: hidden;
+  color: var(--text-muted);
+}
+
+.faq-item.is-open .faq-answer {
+  grid-template-rows: 1fr;
+}
+
+.faq-item.is-open .faq-answer p {
+  padding-bottom: 18px;
+}
+
+@media (max-width: 900px) {
+  .contact-channels,
+  .contact-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .contact-row {
+    grid-template-columns: 1fr;
+  }
+
+  .contact-form {
+    padding: 22px;
+  }
+
+  .contact-form .btn {
+    align-self: stretch;
+  }
+}

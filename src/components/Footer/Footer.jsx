@@ -1,97 +1,117 @@
+import { useState } from "react"
+import { Link } from "react-router-dom"
+import Logo from "../Logo/Logo"
+import Icon from "../Icon/Icon"
+import { useApp } from "../../context/app-context"
 import "./Footer.css"
 
 const Footer = () => {
+  const { notify } = useApp()
+  const [email, setEmail] = useState("")
+
+  const subscribe = (e) => {
+    e.preventDefault()
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+      notify("Please enter a valid email address", "error")
+      return
+    }
+    setEmail("")
+    notify("Thanks! You're subscribed to new listings.")
+  }
+
   return (
     <footer className="footer">
-      <div className="footer-background">
-        <div className="floating-pattern pattern-1"></div>
-        <div className="floating-pattern pattern-2"></div>
-        <div className="floating-pattern pattern-3"></div>
-      </div>
-
       <div className="container">
-        <div className="footer-content">
-          <div className="footer-section">
-            <div className="footer-logo">
-              <h3 className="logo-text">DOMUS</h3>
-              <p className="logo-tagline">Premium Real Estate</p>
-            </div>
-            <p className="footer-description">
-              Your trusted partner in finding the perfect property. We combine expertise with personalized service to
-              make your real estate dreams come true.
+        <div className="footer-grid">
+          <div className="footer-brand">
+            <Logo light />
+            <p>
+              Your trusted partner in finding the perfect property. We combine expertise with personal service to make
+              your real estate dreams come true.
             </p>
+            <form className="footer-news" onSubmit={subscribe}>
+              <label htmlFor="newsletter" className="sr-only">
+                Email address
+              </label>
+              <input
+                id="newsletter"
+                type="email"
+                placeholder="Get new listings by email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+              <button type="submit" className="btn btn-primary" aria-label="Subscribe">
+                <Icon name="send" size={16} />
+              </button>
+            </form>
           </div>
 
-          <div className="footer-section">
-            <h4 className="footer-heading">Quick Links</h4>
+          <div>
+            <h4 className="footer-heading">Explore</h4>
             <ul className="footer-links">
               <li>
-                <a href="#home">Home</a>
+                <Link to="/">Home</Link>
               </li>
               <li>
-                <a href="#properties">Properties</a>
+                <Link to="/properties">Properties</Link>
               </li>
               <li>
-                <a href="#about">About Us</a>
+                <Link to="/favorites">Favorites</Link>
               </li>
               <li>
-                <a href="#contact">Contact</a>
+                <Link to="/about">About us</Link>
+              </li>
+              <li>
+                <Link to="/contact">Contact</Link>
               </li>
             </ul>
           </div>
 
-          <div className="footer-section">
+          <div>
             <h4 className="footer-heading">Services</h4>
             <ul className="footer-links">
               <li>
-                <a href="#buy">Buy Property</a>
+                <Link to="/properties?status=For+Sale">Buy property</Link>
               </li>
               <li>
-                <a href="#sell">Sell Property</a>
+                <Link to="/properties?status=For+Rent">Rent property</Link>
               </li>
               <li>
-                <a href="#rent">Rent Property</a>
+                <Link to="/contact">Sell property</Link>
               </li>
               <li>
-                <a href="#invest">Investment</a>
+                <Link to="/contact">Investment advice</Link>
               </li>
             </ul>
           </div>
 
-          <div className="footer-section">
-            <h4 className="footer-heading">Contact Info</h4>
-            <div className="contact-info">
-              <div className="contact-item">
-                <span className="contact-icon">📞</span>
-                <span>+1 (555) 123-4567</span>
-              </div>
-              <div className="contact-item">
-                <span className="contact-icon">✉️</span>
-                <span>info@domus.com</span>
-              </div>
-              <div className="contact-item">
-                <span className="contact-icon">📍</span>
-                <span>123 Real Estate Ave, NY 10001</span>
-              </div>
-            </div>
+          <div>
+            <h4 className="footer-heading">Contact</h4>
+            <ul className="footer-contact">
+              <li>
+                <Icon name="phone" size={16} />
+                <a href="tel:+998773552105">+998 77 355 21 05</a>
+              </li>
+              <li>
+                <Icon name="mail" size={16} />
+                <a href="mailto:info@propify.uz">info@propify.uz</a>
+              </li>
+              <li>
+                <Icon name="pin" size={16} />
+                <span>Amir Temur Ave 108, Tashkent</span>
+              </li>
+            </ul>
           </div>
         </div>
 
         <div className="footer-bottom">
-          <p>&copy; 2024 Domus. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Propify. All rights reserved.</p>
           <div className="footer-social">
-            <a href="#" className="social-link">
-              Facebook
-            </a>
-            <a href="#" className="social-link">
-              Twitter
-            </a>
-            <a href="#" className="social-link">
-              LinkedIn
-            </a>
-            <a href="#" className="social-link">
-              Instagram
-            </a>
+            {["Facebook", "Instagram", "Telegram", "LinkedIn"].map((s) => (
+              <a key={s} href="#" onClick={(e) => e.preventDefault()}>
+                {s}
+              </a>
+            ))}
           </div>
         </div>
       </div>

@@ -1,246 +1,309 @@
-"use client"
-
-import { useState, useEffect } from "react"
-import { useParams, useNavigate } from "react-router-dom"
+import { useCallback, useEffect, useState } from "react"
+import { Link, useNavigate, useParams } from "react-router-dom"
+import Icon from "../../components/Icon/Icon"
+import PropertyCard from "../../components/PropertyCard/PropertyCard"
+import MortgageCalculator from "../../components/MortgageCalculator/MortgageCalculator"
+import { getPropertyById, properties } from "../../data/properties"
+import { useApp } from "../../context/app-context"
+import { formatNumber, formatPrice } from "../../utils/format"
 import "./PropertyDetail.css"
+
+const AgentForm = ({ property }) => {
+  const { notify, user } = useApp()
+  const [form, setForm] = useState({
+    name: user?.fullName ?? "",
+    phone: "",
+    message: `Hi, I'm interested in "${property.title}". Please contact me.`,
+  })
+  const [errors, setErrors] = useState({})
+  const [sending, setSending] = useState(false)
+
+  const update = (e) => {
+    setForm((f) => ({ ...f, [e.target.name]: e.target.value }))
+    setErrors((er) => ({ ...er, [e.target.name]: "" }))
+  }
+
+  const submit = (e) => {
+    e.preventDefault()
+    const next = {}
+    if (!form.name.trim()) next.name = "Please enter your name"
+    if (!/^\+?[\d\s()-]{7,}$/.test(form.phone)) next.phone = "Please enter a valid phone number"
+    if (Object.keys(next).length) return setErrors(next)
+
+    setSending(true)
+    setTimeout(() => {
+      setSending(false)
+      setForm((f) => ({ ...f, phone: "" }))
+      notify(`Message sent to ${property.agent.name}`)
+    }, 900)
+  }
+
+  return (
+    <form className="agent-form" onSubmit={submit} noValidate>
+      <div className="field">
+        <label htmlFor="a-name">Your name</label>
+        <input id="a-name" name="name" className={`input ${errors.name ? "has-error" : ""}`} value={form.name} onChange={update} />
+        {errors.name && <span className="field-error">{errors.name}</span>}
+      </div>
+      <div className="field">
+        <label htmlFor="a-phone">Phone</label>
+        <input
+          id="a-phone"
+          name="phone"
+          type="tel"
+          placeholder="+998 90 123 45 67"
+          className={`input ${errors.phone ? "has-error" : ""}`}
+          value={form.phone}
+          onChange={update}
+        />
+        {errors.phone && <span className="field-error">{errors.phone}</span>}
+      </div>
+      <div className="field">
+        <label htmlFor="a-msg">Message</label>
+        <textarea id="a-msg" name="message" rows={3} className="input" value={form.message} onChange={update} />
+      </div>
+      <button type="submit" className="btn btn-primary btn-block" disabled={sending}>
+        {sending ? <span className="spinner" /> : <Icon name="send" size={16} />} Send message
+      </button>
+    </form>
+  )
+}
 
 const PropertyDetail = () => {
   const { id } = useParams()
   const navigate = useNavigate()
-  const [property, setProperty] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [currentImageIndex, setCurrentImageIndex] = useState(0)
+  const { isFavorite, toggleFavorite, notify } = useApp()
+  const property = getPropertyById(id)
+  const [imageIndex, setImageIndex] = useState(0)
 
-  const mockProperties = [
-    {
-      id: 1,
-      title: "Modern Luxury Apartment",
-      location: "Downtown Manhattan",
-      price: 850000,
-      type: "Apartment",
-      bedrooms: 3,
-      bathrooms: 2,
-      area: 1200,
-      yearBuilt: 2020,
-      parking: 2,
-      images: [
-        "/modern-luxury-downtown-apartment.png",
-        "/luxury-apartment-living-room.png",
-        "/modern-kitchen.png",
-        "/luxury-bedroom.png",
-      ],
-      coordinates: { lat: 40.7589, lng: -73.9851 },
-      description:
-        "Experience luxury living in this stunning modern apartment located in the heart of Downtown Manhattan. This beautifully designed 3-bedroom, 2-bathroom residence offers breathtaking city views and premium finishes throughout.",
-      features: [
-        "Floor-to-ceiling windows",
-        "Hardwood floors",
-        "Stainless steel appliances",
-        "In-unit washer/dryer",
-        "Central air conditioning",
-        "Balcony with city views",
-        "24/7 doorman",
-        "Fitness center",
-        "Rooftop terrace",
-      ],
-      agent: {
-        name: "Sarah Johnson",
-        phone: "+1 (555) 123-4567",
-        email: "sarah@propify.com",
-        image: "/professional-woman-realtor.png",
-      },
-    },
-    {
-      id: 2,
-      title: "Contemporary House",
-      location: "Brooklyn Heights",
-      price: 1200000,
-      type: "House",
-      bedrooms: 4,
-      bathrooms: 3,
-      area: 1800,
-      yearBuilt: 2018,
-      parking: 2,
-      images: [
-        "/contemporary-brooklyn-house.png",
-        "/contemporary-house-exterior.png",
-        "/modern-living-room.png",
-        "/spacious-kitchen.png",
-      ],
-      coordinates: { lat: 40.6962, lng: -73.9961 },
-      description:
-        "Beautiful contemporary house in the prestigious Brooklyn Heights neighborhood. This spacious 4-bedroom home features modern design elements and high-end finishes throughout.",
-      features: [
-        "Open floor plan",
-        "Gourmet kitchen",
-        "Master suite with walk-in closet",
-        "Private backyard",
-        "Two-car garage",
-        "Smart home technology",
-        "Energy-efficient appliances",
-        "Hardwood floors",
-        "Fireplace",
-      ],
-      agent: {
-        name: "Michael Chen",
-        phone: "+1 (555) 987-6543",
-        email: "michael@propify.com",
-        image: "/professional-realtor.png",
-      },
-    },
-    // Add more properties with similar structure...
-  ]
+  // Reset gallery when navigating to another property.
+  const [lastId, setLastId] = useState(id)
+  if (lastId !== id) {
+    setLastId(id)
+    setImageIndex(0)
+  }
+
+  const count = property?.images.length ?? 0
+  const step = useCallback((dir) => setImageIndex((i) => (i + dir + count) % count), [count])
 
   useEffect(() => {
-    setTimeout(() => {
-      const foundProperty = mockProperties.find((p) => p.id === Number.parseInt(id))
-      setProperty(foundProperty)
-      setLoading(false)
-    }, 800)
-  }, [id])
-
-  const nextImage = () => {
-    if (property) {
-      setCurrentImageIndex((prev) => (prev + 1) % property.images.length)
+    if (!property) return
+    document.title = `${property.title} — Propify`
+    const onKey = (e) => {
+      if (["INPUT", "TEXTAREA", "SELECT"].includes(e.target.tagName)) return
+      if (e.key === "ArrowRight") step(1)
+      if (e.key === "ArrowLeft") step(-1)
     }
-  }
-
-  const prevImage = () => {
-    if (property) {
-      setCurrentImageIndex((prev) => (prev - 1 + property.images.length) % property.images.length)
+    window.addEventListener("keydown", onKey)
+    return () => {
+      window.removeEventListener("keydown", onKey)
+      document.title = "Propify — Premium Real Estate"
     }
-  }
-
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(price)
-  }
-
-  if (loading) {
-    return (
-      <div className="property-detail-loading">
-        <div className="loading-spinner"></div>
-        <p>Loading property details...</p>
-      </div>
-    )
-  }
+  }, [property, step])
 
   if (!property) {
     return (
-      <div className="property-not-found">
-        <h2>Property Not Found</h2>
-        <p>The property you're looking for doesn't exist.</p>
-        <button onClick={() => navigate("/properties")} className="back-btn">
-          Back to Properties
-        </button>
+      <div className="container detail-missing">
+        <div className="empty-state">
+          <div className="empty-icon">🔍</div>
+          <h3>Property not found</h3>
+          <p>The property you're looking for doesn't exist or was removed.</p>
+          <Link to="/properties" className="btn btn-primary">
+            Back to properties
+          </Link>
+        </div>
       </div>
     )
   }
 
-  return (
-    <div className="property-detail">
-      <button onClick={() => navigate("/properties")} className="back-button">
-        ← Back to Properties
-      </button>
+  const fav = isFavorite(property.id)
+  const isRent = property.status === "For Rent"
+  const similar = properties
+    .filter((p) => p.id !== property.id)
+    .sort((a, b) => (b.type === property.type) - (a.type === property.type) || Math.abs(a.price - property.price) - Math.abs(b.price - property.price))
+    .slice(0, 3)
 
-      <div className="property-gallery">
-        <div className="main-image">
-          <img src={property.images[currentImageIndex] || "/placeholder.svg"} alt={property.title} />
-          <button className="gallery-btn prev-btn" onClick={prevImage}>
-            ‹
-          </button>
-          <button className="gallery-btn next-btn" onClick={nextImage}>
-            ›
-          </button>
-        </div>
-        <div className="image-thumbnails">
-          {property.images.map((image, index) => (
+  const share = async () => {
+    const url = window.location.href
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: property.title, url })
+      } else {
+        await navigator.clipboard.writeText(url)
+        notify("Link copied to clipboard")
+      }
+    } catch (err) {
+      if (err?.name !== "AbortError") notify("Could not share this link", "error")
+    }
+  }
+
+  const stats = [
+    { icon: "bed", value: property.bedrooms, label: "Bedrooms" },
+    { icon: "bath", value: property.bathrooms, label: "Bathrooms" },
+    { icon: "area", value: `${formatNumber(property.area)} ft²`, label: "Living area" },
+    { icon: "calendar", value: property.yearBuilt, label: "Year built" },
+    { icon: "car", value: property.parking || "—", label: "Parking" },
+  ]
+
+  return (
+    <div className="detail container">
+      <div className="detail-top">
+        <button type="button" className="btn btn-outline" onClick={() => navigate(-1)}>
+          <Icon name="arrowLeft" size={16} /> Back
+        </button>
+        <nav className="breadcrumbs detail-crumbs" aria-label="Breadcrumb">
+          <Link to="/">Home</Link> / <Link to="/properties">Properties</Link> / <span>{property.title}</span>
+        </nav>
+      </div>
+
+      <div className="gallery">
+        <div className="gallery-main">
+          {property.images.map((src, i) => (
             <img
-              key={index}
-              src={image || "/placeholder.svg"}
-              alt={`${property.title} ${index + 1}`}
-              className={`thumbnail ${index === currentImageIndex ? "active" : ""}`}
-              onClick={() => setCurrentImageIndex(index)}
+              key={src + i}
+              src={src}
+              alt={`${property.title} — photo ${i + 1}`}
+              className={i === imageIndex ? "is-active" : ""}
             />
+          ))}
+          <button type="button" className="gallery-btn gallery-btn--prev" onClick={() => step(-1)} aria-label="Previous photo">
+            <Icon name="chevronLeft" />
+          </button>
+          <button type="button" className="gallery-btn gallery-btn--next" onClick={() => step(1)} aria-label="Next photo">
+            <Icon name="chevronRight" />
+          </button>
+          <span className="gallery-count">
+            {imageIndex + 1} / {count}
+          </span>
+        </div>
+        <div className="gallery-thumbs">
+          {property.images.map((src, i) => (
+            <button
+              key={src + i}
+              type="button"
+              className={`gallery-thumb ${i === imageIndex ? "is-active" : ""}`}
+              onClick={() => setImageIndex(i)}
+              aria-label={`Show photo ${i + 1}`}
+            >
+              <img src={src} alt="" />
+            </button>
           ))}
         </div>
       </div>
 
-      <div className="property-info">
-        <div className="property-header">
-          <div className="property-main-info">
-            <h1 className="property-title">{property.title}</h1>
-            <p className="property-location">📍 {property.location}</p>
-            <div className="property-price">{formatPrice(property.price)}</div>
-          </div>
-          <div className="property-type-badge">{property.type}</div>
-        </div>
-
-        <div className="property-stats">
-          <div className="stat">
-            <span className="stat-icon">🛏️</span>
-            <span className="stat-value">{property.bedrooms}</span>
-            <span className="stat-label">Bedrooms</span>
-          </div>
-          <div className="stat">
-            <span className="stat-icon">🚿</span>
-            <span className="stat-value">{property.bathrooms}</span>
-            <span className="stat-label">Bathrooms</span>
-          </div>
-          <div className="stat">
-            <span className="stat-icon">📐</span>
-            <span className="stat-value">{property.area}</span>
-            <span className="stat-label">Sq Ft</span>
-          </div>
-          <div className="stat">
-            <span className="stat-icon">🏗️</span>
-            <span className="stat-value">{property.yearBuilt}</span>
-            <span className="stat-label">Year Built</span>
-          </div>
-          <div className="stat">
-            <span className="stat-icon">🚗</span>
-            <span className="stat-value">{property.parking}</span>
-            <span className="stat-label">Parking</span>
-          </div>
-        </div>
-
-        <div className="property-description">
-          <h2>Description</h2>
-          <p>{property.description}</p>
-        </div>
-
-        <div className="property-features">
-          <h2>Features & Amenities</h2>
-          <div className="features-grid">
-            {property.features.map((feature, index) => (
-              <div key={index} className="feature-item">
-                <span className="feature-check">✓</span>
-                <span>{feature}</span>
+      <div className="detail-grid">
+        <div className="detail-main">
+          <header className="detail-header">
+            <div>
+              <div className="detail-tags">
+                <span className={`tag ${isRent ? "tag--rent" : "tag--sale"}`}>{property.status}</span>
+                <span className="tag detail-type">{property.type}</span>
               </div>
+              <h1>{property.title}</h1>
+              <p className="detail-location">
+                <Icon name="pin" size={16} /> {property.location}, {property.city}
+              </p>
+            </div>
+            <div className="detail-price-box">
+              <div className="detail-price">
+                {formatPrice(property.price)}
+                {isRent && <small> / year</small>}
+              </div>
+              <div className="detail-actions">
+                <button
+                  type="button"
+                  className={`icon-btn detail-icon ${fav ? "is-fav" : ""}`}
+                  onClick={() => toggleFavorite(property.id)}
+                  aria-label={fav ? "Remove from favorites" : "Save to favorites"}
+                  aria-pressed={fav}
+                >
+                  <Icon name="heart" filled={fav} />
+                </button>
+                <button type="button" className="icon-btn detail-icon" onClick={share} aria-label="Share">
+                  <Icon name="share" />
+                </button>
+              </div>
+            </div>
+          </header>
+
+          <ul className="detail-stats">
+            {stats.map((s) => (
+              <li key={s.label}>
+                <Icon name={s.icon} size={22} />
+                <strong>{s.value}</strong>
+                <span>{s.label}</span>
+              </li>
             ))}
-          </div>
+          </ul>
+
+          <section className="detail-section">
+            <h2>About this property</h2>
+            <p>{property.description}</p>
+          </section>
+
+          <section className="detail-section">
+            <h2>Features &amp; amenities</h2>
+            <ul className="detail-features">
+              {property.features.map((f) => (
+                <li key={f}>
+                  <span>
+                    <Icon name="check" size={14} strokeWidth={3} />
+                  </span>
+                  {f}
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          <section className="detail-section">
+            <h2>Location</h2>
+            <div className="detail-map">
+              <iframe
+                title={`Map of ${property.location}`}
+                loading="lazy"
+                src={`https://maps.google.com/maps?q=${encodeURIComponent(`${property.location}, ${property.city}`)}&z=13&output=embed`}
+              />
+            </div>
+          </section>
         </div>
 
-        <div className="property-agent">
-          <h2>Contact Agent</h2>
-          <div className="agent-card">
-            <img src={property.agent.image || "/placeholder.svg"} alt={property.agent.name} className="agent-photo" />
-            <div className="agent-info">
-              <h3>{property.agent.name}</h3>
-              <p className="agent-contact">📞 {property.agent.phone}</p>
-              <p className="agent-contact">✉️ {property.agent.email}</p>
+        <aside className="detail-side">
+          <div className="agent card">
+            <div className="agent-head">
+              <img src={property.agent.image} alt={property.agent.name} />
+              <div>
+                <strong>{property.agent.name}</strong>
+                <span>{property.agent.role}</span>
+              </div>
             </div>
-            <div className="agent-actions">
-              <button className="contact-btn primary">Call Now</button>
-              <button className="contact-btn secondary">Send Message</button>
+            <div className="agent-links">
+              <a href={`tel:${property.agent.phone.replace(/\s/g, "")}`} className="btn btn-outline">
+                <Icon name="phone" size={16} /> Call
+              </a>
+              <a href={`mailto:${property.agent.email}?subject=${encodeURIComponent(property.title)}`} className="btn btn-outline">
+                <Icon name="mail" size={16} /> Email
+              </a>
             </div>
+            <AgentForm key={property.id} property={property} />
           </div>
-        </div>
+
+          {!isRent && <MortgageCalculator key={property.id} price={property.price} />}
+        </aside>
       </div>
+
+      <section className="detail-similar">
+        <div className="featured-head">
+          <h2 className="section-title">Similar properties</h2>
+          <Link to="/properties" className="btn btn-outline">
+            View all <Icon name="arrowRight" size={16} />
+          </Link>
+        </div>
+        <div className="similar-grid">
+          {similar.map((p) => (
+            <PropertyCard key={p.id} property={p} />
+          ))}
+        </div>
+      </section>
     </div>
   )
 }

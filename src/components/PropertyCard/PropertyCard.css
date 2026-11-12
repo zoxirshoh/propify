@@ -1,0 +1,249 @@
+.pcard {
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: transform 0.3s var(--ease), box-shadow 0.3s var(--ease), border-color 0.3s var(--ease);
+  animation: fade-up 0.5s var(--ease) both;
+}
+
+.pcard:hover {
+  transform: translateY(-6px);
+  box-shadow: var(--shadow-lg);
+  border-color: color-mix(in srgb, var(--primary) 40%, var(--border));
+}
+
+.pcard-media {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: var(--surface-2);
+}
+
+.pcard-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s var(--ease);
+}
+
+.pcard:hover .pcard-media img {
+  transform: scale(1.06);
+}
+
+.pcard-tags {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  display: flex;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.tag {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 5px 10px;
+  border-radius: 8px;
+}
+
+.tag--sale {
+  background: var(--brand-gradient);
+  color: var(--on-primary);
+}
+
+.tag--rent {
+  background: #2563eb;
+  color: #fff;
+}
+
+.tag--glass {
+  background: rgba(11, 22, 40, 0.6);
+  backdrop-filter: blur(6px);
+  color: #fff;
+}
+
+.pcard-fav {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--navy-900);
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.2s var(--ease), color 0.2s var(--ease);
+}
+
+.pcard-fav:hover {
+  transform: scale(1.08);
+  color: var(--danger);
+}
+
+.pcard-fav.is-active {
+  color: var(--danger);
+  animation: heart-pop 0.35s var(--ease);
+}
+
+@keyframes heart-pop {
+  50% {
+    transform: scale(1.25);
+  }
+}
+
+.pcard-body {
+  padding: 20px 22px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.pcard-price {
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--primary-strong);
+}
+
+.pcard-price small {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.pcard-title {
+  font-size: 1.12rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.pcard-title a:hover {
+  color: var(--primary-strong);
+}
+
+.pcard-location {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.pcard-meta {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding: 14px 0;
+  margin-top: 4px;
+  border-top: 1px solid var(--border);
+  font-size: 0.86rem;
+  font-weight: 600;
+}
+
+.pcard-meta li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pcard-meta svg {
+  color: var(--text-muted);
+}
+
+.pcard-desc {
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.pcard-link {
+  margin-top: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--text);
+}
+
+.pcard-link svg {
+  transition: transform 0.2s var(--ease);
+}
+
+.pcard-link:hover {
+  color: var(--primary-strong);
+}
+
+.pcard-link:hover svg {
+  transform: translateX(4px);
+}
+
+/* List layout */
+.pcard--list {
+  flex-direction: row;
+}
+
+.pcard--list .pcard-media {
+  width: 340px;
+  flex-shrink: 0;
+  aspect-ratio: auto;
+  min-height: 240px;
+}
+
+.pcard--list .pcard-media > a {
+  position: absolute;
+  inset: 0;
+}
+
+@media (max-width: 700px) {
+  .pcard--list {
+    flex-direction: column;
+  }
+
+  .pcard--list .pcard-media {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    min-height: 0;
+  }
+
+  .pcard--list .pcard-media > a {
+    position: static;
+  }
+}
+
+/* Skeleton */
+.pcard--skeleton {
+  pointer-events: none;
+}
+
+.sk {
+  background: linear-gradient(90deg, var(--surface-2) 25%, var(--border) 37%, var(--surface-2) 63%);
+  background-size: 400% 100%;
+  animation: sk-shimmer 1.3s ease infinite;
+}
+
+.sk-line {
+  height: 14px;
+  border-radius: 6px;
+}
+
+@keyframes sk-shimmer {
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}

@@ -1,281 +1,262 @@
-"use client"
-
-import { useState, useEffect } from "react"
+import { useMemo, useState } from "react"
+import { Link, useSearchParams } from "react-router-dom"
+import PropertyCard from "../../components/PropertyCard/PropertyCard"
+import Icon from "../../components/Icon/Icon"
+import { properties, PROPERTY_TYPES } from "../../data/properties"
+import { parseRange } from "../../utils/format"
 import "./Properties.css"
-import { Link } from "react-router-dom"
+
+const SORTS = {
+  newest: { label: "Newest first", fn: (a, b) => b.yearBuilt - a.yearBuilt },
+  "price-low": { label: "Price: low to high", fn: (a, b) => a.price - b.price },
+  "price-high": { label: "Price: high to low", fn: (a, b) => b.price - a.price },
+  "area-large": { label: "Area: largest first", fn: (a, b) => b.area - a.area },
+}
+
+const PRICE_OPTIONS = [
+  { value: "", label: "Any price" },
+  { value: "0-750000", label: "Under $750K" },
+  { value: "750000-1500000", label: "$750K – $1.5M" },
+  { value: "1500000-2000000", label: "$1.5M – $2M" },
+  { value: "1500000+", label: "$1.5M+" },
+  { value: "2000000+", label: "$2M+" },
+]
+
+const FILTER_KEYS = ["q", "type", "price", "status", "beds"]
 
 const Properties = () => {
-  const [properties, setProperties] = useState([])
-  const [filteredProperties, setFilteredProperties] = useState([])
-  const [filters, setFilters] = useState({
-    location: "",
-    priceRange: "",
-    propertyType: "",
-    sortBy: "price-low",
-  })
-  const [loading, setLoading] = useState(true)
+  const [params, setParams] = useSearchParams()
+  const [showFilters, setShowFilters] = useState(false)
 
-  const mockProperties = [
-    {
-      id: 1,
-      title: "Modern Luxury Apartment",
-      location: "Downtown Manhattan",
-      price: 850000,
-      type: "Apartment",
-      bedrooms: 3,
-      bathrooms: 2,
-      area: 1200,
-      image: "/modern-luxury-downtown-apartment.png",
-      coordinates: { lat: 40.7589, lng: -73.9851 },
-    },
-    {
-      id: 2,
-      title: "Contemporary House",
-      location: "Brooklyn Heights",
-      price: 1200000,
-      type: "House",
-      bedrooms: 4,
-      bathrooms: 3,
-      area: 1800,
-      image: "/contemporary-brooklyn-house.png",
-      coordinates: { lat: 40.6962, lng: -73.9961 },
-    },
-    {
-      id: 3,
-      title: "Luxury Villa",
-      location: "Queens Village",
-      price: 950000,
-      type: "Villa",
-      bedrooms: 5,
-      bathrooms: 4,
-      area: 2200,
-      image: "/luxury-villa-queens.png",
-      coordinates: { lat: 40.7282, lng: -73.7949 },
-    },
-    {
-      id: 4,
-      title: "Modern Penthouse",
-      location: "Upper East Side",
-      price: 2500000,
-      type: "Penthouse",
-      bedrooms: 4,
-      bathrooms: 3,
-      area: 1600,
-      image: "/modern-penthouse-ues.png",
-      coordinates: { lat: 40.7736, lng: -73.9566 },
-    },
-    {
-      id: 5,
-      title: "Elegant Townhouse",
-      location: "Greenwich Village",
-      price: 1800000,
-      type: "Townhouse",
-      bedrooms: 3,
-      bathrooms: 2,
-      area: 1400,
-      image: "/elegant-greenwich-townhouse.png",
-      coordinates: { lat: 40.7335, lng: -74.0027 },
-    },
-    {
-      id: 6,
-      title: "Waterfront Condo",
-      location: "Battery Park",
-      price: 1100000,
-      type: "Condo",
-      bedrooms: 2,
-      bathrooms: 2,
-      area: 1000,
-      image: "/waterfront-condo-battery-park.png",
-      coordinates: { lat: 40.7033, lng: -74.017 },
-    },
-  ]
-
-  useEffect(() => {
-    setTimeout(() => {
-      setProperties(mockProperties)
-      setFilteredProperties(mockProperties)
-      setLoading(false)
-    }, 1000)
-  }, [])
-
-  useEffect(() => {
-    let filtered = [...properties]
-
-    if (filters.location) {
-      filtered = filtered.filter((property) => property.location.toLowerCase().includes(filters.location.toLowerCase()))
-    }
-
-    if (filters.priceRange) {
-      const [min, max] = filters.priceRange.split("-").map(Number)
-      filtered = filtered.filter((property) => property.price >= min && (max ? property.price <= max : true))
-    }
-
-    if (filters.propertyType) {
-      filtered = filtered.filter((property) => property.type === filters.propertyType)
-    }
-
-    // Sort properties
-    filtered.sort((a, b) => {
-      switch (filters.sortBy) {
-        case "price-low":
-          return a.price - b.price
-        case "price-high":
-          return b.price - a.price
-        case "area-large":
-          return b.area - a.area
-        case "area-small":
-          return a.area - b.area
-        default:
-          return 0
-      }
-    })
-
-    setFilteredProperties(filtered)
-  }, [filters, properties])
-
-  const handleFilterChange = (filterType, value) => {
-    setFilters((prev) => ({
-      ...prev,
-      [filterType]: value,
-    }))
+  const filters = {
+    q: params.get("q") ?? "",
+    type: params.get("type") ?? "",
+    price: params.get("price") ?? "",
+    status: params.get("status") ?? "",
+    beds: params.get("beds") ?? "",
+    sort: SORTS[params.get("sort")] ? params.get("sort") : "newest",
+    view: params.get("view") === "list" ? "list" : "grid",
   }
 
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(price)
-  }
-
-  if (loading) {
-    return (
-      <div className="properties-loading">
-        <div className="loading-container">
-          <div className="loading-house">
-            <div className="house-base"></div>
-            <div className="house-roof"></div>
-            <div className="house-door"></div>
-            <div className="house-windows">
-              <div className="window"></div>
-              <div className="window"></div>
-            </div>
-            <div className="house-chimney"></div>
-          </div>
-          <div className="loading-progress">
-            <div className="progress-bar">
-              <div className="progress-fill"></div>
-            </div>
-            <p className="loading-text">Qidirilmoqda...</p>
-          </div>
-        </div>
-      </div>
+  const setFilter = (key, value) => {
+    setParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        if (value) next.set(key, value)
+        else next.delete(key)
+        return next
+      },
+      { replace: true },
     )
   }
 
+  const resetFilters = () =>
+    setParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        FILTER_KEYS.forEach((k) => next.delete(k))
+        return next
+      },
+      { replace: true },
+    )
+
+  const activeCount = FILTER_KEYS.filter((k) => filters[k]).length
+
+  const results = useMemo(() => {
+    const q = filters.q.trim().toLowerCase()
+    const range = parseRange(filters.price)
+    const minBeds = Number(filters.beds) || 0
+    return properties
+      .filter((p) => !q || `${p.title} ${p.location} ${p.city}`.toLowerCase().includes(q))
+      .filter((p) => !filters.type || p.type === filters.type)
+      .filter((p) => !filters.status || p.status === filters.status)
+      .filter((p) => !range || (p.price >= range.min && p.price <= range.max))
+      .filter((p) => p.bedrooms >= minBeds)
+      .sort(SORTS[filters.sort].fn)
+  }, [filters.q, filters.type, filters.status, filters.price, filters.beds, filters.sort])
+
   return (
     <div className="properties-page">
-      <div className="properties-header">
-        <div className="properties-hero">
-          <h1 className="properties-title">Premium Properties</h1>
-          <p className="properties-subtitle">Discover your dream home from our exclusive collection</p>
+      <section className="page-banner">
+        <div className="container">
+          <nav className="breadcrumbs" aria-label="Breadcrumb">
+            <Link to="/">Home</Link> / <span>Properties</span>
+          </nav>
+          <h1>Find your next home</h1>
+          <p>Discover {properties.length} premium properties for sale and rent from our exclusive collection.</p>
         </div>
-      </div>
+      </section>
 
-      <div className="properties-filters">
-        <div className="filters-container">
-          <div className="filter-group">
-            <label>Location</label>
-            <input
-              type="text"
-              placeholder="Search by location..."
-              value={filters.location}
-              onChange={(e) => handleFilterChange("location", e.target.value)}
-              className="filter-input"
-            />
+      <div className="container properties-layout">
+        <aside className={`filters ${showFilters ? "is-open" : ""}`} aria-label="Filters">
+          <div className="filters-head">
+            <h2>
+              <Icon name="filter" size={18} /> Filters
+            </h2>
+            {activeCount > 0 && (
+              <button type="button" className="filters-reset" onClick={resetFilters}>
+                Reset ({activeCount})
+              </button>
+            )}
           </div>
 
-          <div className="filter-group">
-            <label>Price Range</label>
+          <div className="field">
+            <label htmlFor="f-q">Search</label>
+            <div className="input-icon">
+              <Icon name="search" size={18} />
+              <input
+                id="f-q"
+                className="input"
+                placeholder="Title or location…"
+                value={filters.q}
+                onChange={(e) => setFilter("q", e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="field">
+            <span className="field-label">Listing</span>
+            <div className="segmented">
+              {[
+                ["", "All"],
+                ["For Sale", "Buy"],
+                ["For Rent", "Rent"],
+              ].map(([value, label]) => (
+                <button
+                  key={label}
+                  type="button"
+                  className={filters.status === value ? "is-active" : ""}
+                  onClick={() => setFilter("status", value)}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="field">
+            <label htmlFor="f-type">Property type</label>
             <select
-              value={filters.priceRange}
-              onChange={(e) => handleFilterChange("priceRange", e.target.value)}
-              className="filter-select"
+              id="f-type"
+              className="input"
+              value={filters.type}
+              onChange={(e) => setFilter("type", e.target.value)}
             >
-              <option value="">All Prices</option>
-              <option value="0-1000000">Under $1M</option>
-              <option value="1000000-1500000">$1M - $1.5M</option>
-              <option value="1500000-2000000">$1.5M - $2M</option>
-              <option value="2000000-999999999">Above $2M</option>
+              <option value="">All types</option>
+              {PROPERTY_TYPES.map((t) => (
+                <option key={t}>{t}</option>
+              ))}
             </select>
           </div>
 
-          <div className="filter-group">
-            <label>Property Type</label>
+          <div className="field">
+            <label htmlFor="f-price">Price range</label>
             <select
-              value={filters.propertyType}
-              onChange={(e) => handleFilterChange("propertyType", e.target.value)}
-              className="filter-select"
+              id="f-price"
+              className="input"
+              value={filters.price}
+              onChange={(e) => setFilter("price", e.target.value)}
             >
-              <option value="">All Types</option>
-              <option value="Apartment">Apartment</option>
-              <option value="House">House</option>
-              <option value="Villa">Villa</option>
-              <option value="Penthouse">Penthouse</option>
-              <option value="Townhouse">Townhouse</option>
-              <option value="Condo">Condo</option>
+              {PRICE_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
             </select>
           </div>
 
-          <div className="filter-group">
-            <label>Sort By</label>
-            <select
-              value={filters.sortBy}
-              onChange={(e) => handleFilterChange("sortBy", e.target.value)}
-              className="filter-select"
-            >
-              <option value="price-low">Price: Low to High</option>
-              <option value="price-high">Price: High to Low</option>
-              <option value="area-large">Area: Largest First</option>
-              <option value="area-small">Area: Smallest First</option>
-            </select>
+          <div className="field">
+            <span className="field-label">Bedrooms</span>
+            <div className="segmented">
+              {["", "1", "2", "3", "4"].map((b) => (
+                <button
+                  key={b || "any"}
+                  type="button"
+                  className={filters.beds === b ? "is-active" : ""}
+                  onClick={() => setFilter("beds", b)}
+                >
+                  {b ? `${b}+` : "Any"}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
-      </div>
 
-      <div className="properties-grid">
-        <div className="properties-container">
-          {filteredProperties.length > 0 ? (
-            filteredProperties.map((property, index) => (
-              <div key={property.id} className="property-card" style={{ animationDelay: `${index * 0.1}s` }}>
-                <div className="property-image">
-                  <img src={property.image || "/placeholder.svg"} alt={property.title} />
-                  <div className="property-badge">{property.type}</div>
-                </div>
-                <div className="property-content">
-                  <h3 className="property-title">{property.title}</h3>
-                  <p className="property-location">📍 {property.location}</p>
-                  <div className="property-details">
-                    <span>🛏️ {property.bedrooms} beds</span>
-                    <span>🚿 {property.bathrooms} baths</span>
-                    <span>📐 {property.area} sq ft</span>
-                  </div>
-                  <div className="property-price">{formatPrice(property.price)}</div>
-                  <Link to={`/property/${property.id}`} className="property-btn">
-                    View Details
-                  </Link>
-                </div>
+          <button type="button" className="btn btn-primary btn-block filters-apply" onClick={() => setShowFilters(false)}>
+            Show {results.length} results
+          </button>
+        </aside>
+
+        <section className="results">
+          <div className="results-bar">
+            <p className="results-count">
+              <strong>{results.length}</strong> {results.length === 1 ? "property" : "properties"} found
+            </p>
+            <div className="results-tools">
+              <button type="button" className="btn btn-outline filters-toggle" onClick={() => setShowFilters(true)}>
+                <Icon name="filter" size={16} /> Filters {activeCount > 0 && `(${activeCount})`}
+              </button>
+              <label className="sr-only" htmlFor="f-sort">
+                Sort by
+              </label>
+              <select
+                id="f-sort"
+                className="input sort-select"
+                value={filters.sort}
+                onChange={(e) => setFilter("sort", e.target.value === "newest" ? "" : e.target.value)}
+              >
+                {Object.entries(SORTS).map(([key, s]) => (
+                  <option key={key} value={key}>
+                    {s.label}
+                  </option>
+                ))}
+              </select>
+              <div className="view-toggle" role="group" aria-label="Layout">
+                <button
+                  type="button"
+                  className={filters.view === "grid" ? "is-active" : ""}
+                  onClick={() => setFilter("view", "")}
+                  aria-label="Grid view"
+                  aria-pressed={filters.view === "grid"}
+                >
+                  <Icon name="grid" size={18} />
+                </button>
+                <button
+                  type="button"
+                  className={filters.view === "list" ? "is-active" : ""}
+                  onClick={() => setFilter("view", "list")}
+                  aria-label="List view"
+                  aria-pressed={filters.view === "list"}
+                >
+                  <Icon name="list" size={18} />
+                </button>
               </div>
-            ))
+            </div>
+          </div>
+
+          {results.length > 0 ? (
+            <div className={`results-grid results-grid--${filters.view}`}>
+              {results.map((p, i) => (
+                <PropertyCard
+                  key={p.id}
+                  property={p}
+                  layout={filters.view}
+                  style={{ animationDelay: `${Math.min(i, 6) * 0.06}s` }}
+                />
+              ))}
+            </div>
           ) : (
-            <div className="no-properties">
-              <h3>No properties found</h3>
-              <p>Try adjusting your filters to see more results</p>
+            <div className="empty-state">
+              <div className="empty-icon">🏚️</div>
+              <h3>No properties match your filters</h3>
+              <p>Try widening the price range or removing a filter.</p>
+              <button type="button" className="btn btn-primary" onClick={resetFilters}>
+                Clear all filters
+              </button>
             </div>
           )}
-        </div>
+        </section>
       </div>
+      {showFilters && <div className="filters-backdrop" onClick={() => setShowFilters(false)} />}
     </div>
   )
 }
