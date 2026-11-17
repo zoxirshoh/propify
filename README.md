@@ -1,12 +1,51 @@
-# React + Vite
+# Propify
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A responsive real-estate listings web app for browsing properties to buy or rent.
 
-Currently, two official plugins are available:
+**Live demo:** _coming soon_
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Features
 
-## Expanding the ESLint configuration
+- **Property search & filters**: search by title, location or city; filter by buy/rent status, property type, price range and bedrooms; sort results. Filters live in the URL, so filtered views can be shared and bookmarked.
+- **Property detail pages** with dynamic routing (`/property/:id`)
+- **Favorites**: save properties and view them on a dedicated page (persisted in `localStorage`)
+- **Mortgage calculator**: estimate monthly payments
+- **Light / dark mode**: follows the system preference and remembers your choice
+- **Demo login**, toast notifications, loading screen and a custom 404 page
+- Fully responsive layout with a mobile filter drawer
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Tech stack
+
+- [React 19](https://react.dev/)
+- [React Router 7](https://reactrouter.com/)
+- [Vite](https://vite.dev/)
+- React Context API for global state (favorites, theme, user, toasts)
+- Plain CSS
+- Deployed on [Vercel](https://vercel.com/) (SPA rewrites in `vercel.json`)
+
+## Project structure
+
+```
+src/
+  components/   Reusable UI (Header, PropertyCard, MortgageCalculator, Toast, ...)
+  context/      AppProvider: favorites, theme, auth and notifications
+  data/         Property data
+  pages/        Home, Properties, PropertyDetail, Favorites, About, Contact, Login, NotFound
+  utils/        Formatting and localStorage helpers
+```
+
+## Getting started
+
+```bash
+git clone https://github.com/zoxirshoh/Propify.uz.git
+cd Propify.uz
+npm install
+npm run dev
+```
+
+Other scripts: `npm run build` (production build), `npm run preview` (preview the build), `npm run lint`.
+
+## Author
+
+**Zohirshoh Rahmonberdiyev**: frontend developer from Namangan, Uzbekistan.
+[GitHub](https://github.com/zoxirshoh)
