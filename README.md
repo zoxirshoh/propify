@@ -37,8 +37,8 @@ src/
 ## Getting started
 
 ```bash
-git clone https://github.com/zoxirshoh/Propify.uz.git
-cd Propify.uz
+git clone https://github.com/zoxirshoh/propify.git
+cd propify
 npm install
 npm run dev
 ```
